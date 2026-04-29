@@ -98,4 +98,48 @@ names(new.cluster.ids) <- levels(CD8.combined)
 CD8.combined <- RenameIdents (CD8.combined, new.cluster.ids)
 CD8.combined$annotation <- CD8.combined@active.ident
 
+## Export barcodes of aaCD8 cells for overlay on PBMC/Liver T cells
+aaCD8.barcodes <- as.character(rownames(CD8.combined@meta.data[(CD8.combined$annotation %in% c("TEM-a", "TEM-b", "TEM-c", "TEM-d", "TEM-e", "TEM-f", "TEM-g"))&(CD8.combined$orig.ident %in% c("A09", "A13", "A15"))]))
+
+write.table(data.frame(barcodes = aaCD8.barcodes),file="./Integration/Table/aaCD8_barcode.txt",col.names = FALSE, row.names = FALSE, quote = FALSE)
+
+
+## add TCR information
+
+s5 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH5_TCR/outs/filtered_contig_annotations.csv")
+s7 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH7_TCR/outs/filtered_contig_annotations.csv")
+s8 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH8_TCR/outs/filtered_contig_annotations.csv")
+s9 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH9_TCR/filtered_contig_annotations.csv")
+s10 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH10_TCR/filtered_contig_annotations.csv")
+s11 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH11_TCR/filtered_contig_annotations.csv")
+s12 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH12_TCR/filtered_contig_annotations.csv")
+s13 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH13_TCR/filtered_contig_annotations.csv")
+s14 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH14_TCR/filtered_contig_annotations.csv")
+s15 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH15_TCR/filtered_contig_annotations.csv")
+
+ob.list <- list ()
+samplelist <- c("AIH05", "AIH07", "AIH08", "AIH09", "AIH10", "AIH11", "AIH12", "AIH13", "AIH14", "AIH15")
+ob.list[[1]] <- s5
+ob.list[[2]] <- s7
+ob.list[[3]] <- s8
+ob.list[[4]] <- s9
+ob.list[[5]] <- s10
+ob.list[[6]] <- s11
+ob.list[[7]] <- s12
+ob.list[[8]] <- s13
+ob.list[[9]] <- s14
+ob.list[[10]] <- s15
+
+combined <- combineTCR(ob.list,
+                       sample=samplelist,
+                       filterMulti=FALSE)
+
+CD8.combined <- combineExpression(combined, 
+                         CD8.combined,
+                         cloneCall = "gene+nt",
+                         proportion = F,
+                         cloneType = c(None = 0, Single =1, Small = 10, Medium = 30, Large =200),
+                         filterNA= T)
+
+
 saveRDS(CD8.combined, file='./Integration/RDS/13_SCS_SNS_CD8_figures.rds')

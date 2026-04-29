@@ -105,6 +105,47 @@ names(new.cluster.ids) <- levels(CD4.combined)
 CD4.combined <- RenameIdents (CD4.combined, new.cluster.ids)
 CD4.combined$annotation <- CD4.combined@active.ident
 
+## Export barcodes of TRM1 cells for overlay on PBMC/Liver T cells
+TRM1.barcodes <- as.character(rownames(CD4.combined@meta.data[CD4.combined$annotation== "TRM1"&(CD4.combined$orig.ident %in% c("A09", "A13", "A15"))]))
+
+write.table(data.frame(barcodes = TRM1.barcodes),file="./Integration/Table/TRM1_barcode.txt",col.names = FALSE, row.names = FALSE, quote = FALSE)
+
+## Add TCR annotation
+
+s7 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH7_TCR/outs/filtered_contig_annotations.csv")
+s8 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH8_TCR/outs/filtered_contig_annotations.csv")
+s9 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH9_TCR/filtered_contig_annotations.csv")
+s10 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH10_TCR/filtered_contig_annotations.csv")
+s11 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH11_TCR/filtered_contig_annotations.csv")
+s12 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH12_TCR/filtered_contig_annotations.csv")
+s13 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH13_TCR/filtered_contig_annotations.csv")
+s14 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH14_TCR/filtered_contig_annotations.csv")
+s15 <- read.csv ("./Single_sample_Cellranger/SC-Seq-Cellranger/AIH15_TCR/filtered_contig_annotations.csv")
+
+ob.list <- list ()
+samplelist <- c("AIH07", "AIH08", "AIH09", "AIH10", "AIH11", "AIH12", "AIH13", "AIH14", "AIH15")
+ob.list[[1]] <- s7
+ob.list[[2]] <- s8
+ob.list[[3]] <- s9
+ob.list[[4]] <- s10
+ob.list[[5]] <- s11
+ob.list[[6]] <- s12
+ob.list[[7]] <- s13
+ob.list[[8]] <- s14
+ob.list[[9]] <- s15
+
+combined <- combineTCR(ob.list,
+                       sample=samplelist,
+                       filterMulti=FALSE)
+
+CD4.combined <- combineExpression(combined, 
+                         CD4.combined,
+                         cloneCall = "gene+nt",
+                         proportion = F,
+                         cloneType = c(None = 0, Single =1, Small = 3, Medium = 5, Large =20),
+                         filterNA= T)
+
+
 
 saveRDS(CD4.combined, file='./Integration/RDS/12_SCS_SNS_CD4_figures.rds')
 
